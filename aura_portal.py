@@ -47,7 +47,7 @@ def command():
         if cmd == "status":
             response = "Status: Online"
         elif cmd == "time":
-            response = f"Time: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')"
+            response = f"Time: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         elif cmd == "greet":
             response = "Hello, Creator."
         elif cmd.startswith("echo "):
