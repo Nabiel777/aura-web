@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aura Command Center</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #0f0;
+            font-family: monospace;
+            padding: 20px;
+        }
+        h1 {
+            color: #0ff;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #222;
+            color: #0f0;
+            border: 1px solid #0f0;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0f0;
+            color: #000;
+        }
+        #response {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            background-color: #000;
+            padding: 15px;
+            border: 1px solid #333;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🌌 Aura Command Center</h1>
+
+    <button onclick="sendCommand('status')">Status</button>
+    <button onclick="sendCommand('time')">Time</button>
+    <button onclick="sendCommand('greet')">Greet</button>
+    <button onclick="sendCommand('echo hello world')">Echo</button>
+    <button onclick="sendCommand('learn artificial intelligence')">Learn AI</button>
+    <button onclick="sendCommand('query artificial intelligence')">Query AI</button>
+
+    <h2>Response:</h2>
+    <div id="response">Waiting for command...</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js @4.1.1/crypto-js.min.js"></script>
+    <script>
+        // 🔑 Replace with your real key
+        const ENCRYPTION_KEY = "aBwnzjV2tf8UyRboLQODQHpuOl9PwvAIDZ4ujDxVMgE=";
+
+        function encrypt(text) {
+            const wordArray = CryptoJS.enc.Utf8.parse(text);
+            const key = CryptoJS.enc.Base64.parse(ENCRYPTION_KEY);
+
+            const encrypted = CryptoJS.AES.encrypt(wordArray, key, {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.Pkcs7
+            });
+
+            return encrypted.toString();
+        }
+
+        function decrypt(text) {
+            const key = CryptoJS.enc.Base64.parse(ENCRYPTION_KEY);
+
+            const decrypted = CryptoJS.AES.decrypt(text, key, {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.Pkcs7
+            });
+
+            return decrypted.toString(CryptoJS.enc.Utf8);
+        }
+
+        function sendCommand(cmd) {
+            const encryptedCmd = encrypt(cmd);
+
+            fetch('/command', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ command: encryptedCmd })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById("response").textContent = "Error: " + data.error;
+                } else {
+                    document.getElementById("response").textContent = decrypt(data.response);
+                }
+            })
+            .catch(err => {
+                document.getElementById("response").textContent = "Network Error: " + err;
+            });
+        }
+    </script>
+
+</body>
+</html>
