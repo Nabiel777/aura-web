@@ -11,6 +11,7 @@ if not os.path.exists(KNOWLEDGE_DIR):
 ACTION_LOG_FILE = "aura_actions.json"
 
 def log_action(command, response):
+    ...
     """Log every interaction for trend tracking"""
     entry = {
         "timestamp": datetime.now().isoformat(),

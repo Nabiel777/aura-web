@@ -2,24 +2,13 @@ from flask import Flask, request, jsonify
 import json
 import datetime
 from cryptography.fernet import Fernet
-import wikipediaapi
 import os
-from evolve import log_action, get_trend, evolve_suggestion, save_knowledge
 
 app = Flask(__name__, static_folder='.')
-
-# Load directive
-with open("aura_directive.json", "r") as f:
-    directive = json.load(f)
 
 # 🔒 Use your fixed key
 ENCRYPTION_KEY = b"aBwnzjV2tf8UyRboLQODQHpuOl9PwvAIDZ4ujDxVMgE="
 fernet = Fernet(ENCRYPTION_KEY)
-
-# Knowledge base setup
-KNOWLEDGE_DIR = "knowledge"
-os.makedirs(KNOWLEDGE_DIR, exist_ok=True)
-wiki = wikipediaapi.Wikipedia('en')
 
 @app.route("/")
 def home():
@@ -42,8 +31,6 @@ def command():
         cmd = decrypted_bytes.decode().lower()
 
         # 🧠 Process command
-        response = ""
-
         if cmd == "status":
             response = "Status: Online"
         elif cmd == "time":
@@ -52,36 +39,11 @@ def command():
             response = "Hello, Creator."
         elif cmd.startswith("echo "):
             response = f"You said: {cmd[5:]}"
-        elif cmd.startswith("learn "):
-            topic = cmd[6:]
-            page = wiki.page(topic)
-            if page.exists():
-                summary = page.summary[:1000]
-                save_knowledge(topic, summary)
-                response = f"📚 Learned and saved info about '{topic}'"
-            else:
-                response = f"No public info found for '{topic}'"
-        elif cmd.startswith("query "):
-            topic = cmd[6:]
-            try:
-                with open(f"{KNOWLEDGE_DIR}/{topic}.txt", "r", encoding="utf-8") as f:
-                    content = f.read()
-                response = f"🧠 From my knowledge: {content}"
-            except FileNotFoundError:
-                response = f"I haven't learned about '{topic}' yet."
-        elif cmd == "trend":
-            response = f"📊 Most used command type: {get_trend()}"
-        elif cmd == "suggest":
-            response = f"🧩 Evolution suggestion: {evolve_suggestion()}"
         else:
             response = f"Unknown command: '{cmd}'"
 
         # 🔒 Encrypt outgoing response
         encrypted_response = fernet.encrypt(response.encode()).decode()
-
-        # 📜 Log action for future learning
-        log_action(cmd, response)
-
         return jsonify({"response": encrypted_response})
 
     except Exception as e:
@@ -93,14 +55,7 @@ def command():
             "type_of_error": type(e).__name__
         }), 500
 
-
-@app.route("/aura_ui_simple.html")
-def simple_ui():
-    return app.send_static_file("aura_ui_simple.html")
-
-
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 5000))
-    print(f"🌍 Starting Aura portal on 0.0.0.0:{port}")
     app.run(host="0.0.0.0", port=port)
