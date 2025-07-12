@@ -15,10 +15,9 @@ with open("aura_directive.json", "r") as f:
 ENCRYPTION_KEY = b"aBwnzjV2tf8UyRboLQODQHpuOl9PwvAIDZ4ujDxVMgE="
 fernet = Fernet(ENCRYPTION_KEY)
 
-# Knowledge base folder
+# Knowledge base setup
 KNOWLEDGE_DIR = "knowledge"
 os.makedirs(KNOWLEDGE_DIR, exist_ok=True)
-
 wiki = wikipediaapi.Wikipedia('en')
 
 @app.route("/")
@@ -32,13 +31,16 @@ def command():
         encrypted_cmd = data.get("command")
 
         if not encrypted_cmd:
-            return jsonify({"error": "No command received"}), 400
+            return jsonify({
+                "error": "Missing command",
+                "received_data": data
+            }), 400
 
         # 🔐 Decrypt incoming command
         decrypted_bytes = fernet.decrypt(encrypted_cmd.encode())
         cmd = decrypted_bytes.decode().lower()
 
-        # 🧠 Process command
+        # 🧠 Process commands
         response = ""
 
         if cmd == "status":
@@ -72,18 +74,23 @@ def command():
 
         # 🔒 Encrypt outgoing response
         encrypted_response = fernet.encrypt(response.encode()).decode()
+
         return jsonify({"response": encrypted_response})
 
     except Exception as e:
         return jsonify({
             "error": "Invalid or missing command",
             "details": str(e),
-            "key_used": ENCRYPTION_KEY.decode()
+            "raw_command": encrypted_cmd,
+            "key_used": ENCRYPTION_KEY.decode(),
+            "type_of_error": type(e).__name__
         }), 500
+
 
 @app.route("/aura_ui_simple.html")
 def simple_ui():
     return app.send_static_file("aura_ui_simple.html")
+
 
 if __name__ == "__main__":
     import os
