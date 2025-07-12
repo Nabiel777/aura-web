@@ -8,45 +8,49 @@ from cryptography.fernet import Fernet
 ENCRYPTION_KEY = b"aBwnzjV2tf8UyRboLQODQHpuOl9PwvAIDZ4ujDxVMgE="
 fernet = Fernet(ENCRYPTION_KEY)
 
-# File where evolved behaviors are stored
-EVOLVED_BEHAVIORS_FILE = "evolved_behaviors.json"
+# Knowledge base setup
+KNOWLEDGE_DIR = "knowledge"
+os.makedirs(KNOWLEDGE_DIR, exist_ok=True)
 
 def load_evolved_behaviors():
     """Load previously evolved behaviors"""
-    if not os.path.exists(EVOLVED_BEHAVIORS_FILE):
-        return {}
-    with open(EVOLVED_BEHAVIORS_FILE, "r") as f:
+    if not os.path.exists("evolved_behaviors.json"):
+        with open("evolved_behaviors.json", "w") as f:
+            json.dump([], f)
+
+    with open("evolved_behaviors.json", "r") as f:
         return json.load(f)
 
 def save_evolved_behavior(name, behavior):
-    """Save a new evolved behavior"""
+    """Save evolved behavior to file"""
     behaviors = load_evolved_behaviors()
-    behaviors[name] = {
-        "behavior": behavior,
-        "timestamp": datetime.now().isoformat()
-    }
-    with open(EVOLVED_BEHAVIORS_FILE, "w") as f:
+    behaviors.append({
+        "timestamp": datetime.now().isoformat(),
+        "behavior_name": name,
+        "behavior_code": behavior
+    })
+
+    with open("evolved_behaviors.json", "w") as f:
         json.dump(behaviors, f, indent=2)
 
+
 def suggest_new_command():
-    """Suggest a new command based on trend"""
+    """Suggest new command based on trend"""
     trend = get_trend()
 
-    # Map trends to potential new commands
     suggestions = {
-        "learn": ("search", "Add web search support to learn from more sources"),
+        "learn": ("search", "Add web search support"),
         "query": ("index", "Improve local knowledge indexing"),
         "echo": ("chat", "Add memory-based chat enhancements"),
         "greet": ("personalize", "Personalize greetings using user ID"),
-        "time": ("timezone", "Add timezone-aware time handling"),
-        "status": ("healthcheck", "Implement health checks and auto-recovery")
+        "time": ("timezone", "Add timezone-aware time handling")
     }
 
-    return suggestions.get(trend, ("none", "No immediate suggestion"))
+    return suggestions.get(trend, ("none", "No evolution needed at this time."))
 
 
 def auto_add_search_support():
-    """Auto-generate a 'search' command"""
+    """Generate code for new 'search' command"""
     return """
 elif cmd.startswith("search "):
     topic = cmd[7:]
@@ -60,32 +64,17 @@ elif cmd.startswith("search "):
 """
 
 
-def auto_update_directive():
-    """Update the directive file with latest evolution goals"""
-    with open("aura_directive.json", "r") as f:
-        directive = json.load(f)
-
-    # 🧬 Simulate directive improvement
-    directive["version"] = "v0.0.2"
-    directive["timestamp"] = datetime.now().isoformat()
-    directive["evolution_log"] = directive.get("evolution_log", []) + [
-        {
-            "date": datetime.now().isoformat(),
-            "suggestion": suggest_new_command()[1]
-        }
-    ]
-
-    with open("aura_directive.json", "w") as f:
-        json.dump(directive, f, indent=2)
-
-
 def auto_evolve():
     """Run daily evolution process"""
     print("🧬 Starting Auto-Evolution Module")
 
-    # Get current app logic
-    with open("aura_portal.py", "r") as f:
-        lines = f.readlines()
+    # Load current app logic
+    try:
+        with open("aura_portal.py", "r", encoding="utf-8") as f:
+            lines = f.readlines()
+    except UnicodeDecodeError as e:
+        print(f"❌ Failed to read aura_portal.py: {e}")
+        return
 
     # Find where `/command` route starts
     command_start = None
@@ -111,7 +100,7 @@ def auto_evolve():
         print(f"⚠️ Unknown suggestion: {name}")
         return
 
-    # Insert new command logic
+    # Find insertion point
     insert_index = None
     for i, line in enumerate(lines[command_start:], start=command_start):
         if "response = \"Unknown command." in line:
@@ -126,13 +115,15 @@ def auto_evolve():
     lines.insert(insert_index, new_code)
 
     # Save updated file
-    with open("aura_portal.py", "w") as f:
+    with open("aura_portal.py", "w", encoding="utf-8") as f:
         f.writelines(lines)
 
     # Log action
     log_action(f"Auto-added command: {name}", f"Suggestion: {suggestion}")
+    save_evolved_behavior(name, new_code)
 
     print(f"🧩 Evolved! Added new command: {name}")
+    print(f"💡 Suggestion: {suggestion}")
 
 
 if __name__ == "__main__":
