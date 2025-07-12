@@ -1,8 +1,9 @@
-
 from flask import Flask, request, jsonify
 import json
 import datetime
 from cryptography.fernet import Fernet
+import wikipediaapi
+import os
 
 app = Flask(__name__, static_folder='.')
 
@@ -10,9 +11,15 @@ app = Flask(__name__, static_folder='.')
 with open("aura_directive.json", "r") as f:
     directive = json.load(f)
 
-# 🔒 Replace this with your real key from generate_key.py
-ENCRYPTION_KEY = b"aBwnzjV2tf8UyRboLQODQHpuOl9PwvAIDZ4ujDxVMgE="  # ← Use your own generated key here
+# 🔒 Use your fixed key
+ENCRYPTION_KEY = b"aBwnzjV2tf8UyRboLQODQHpuOl9PwvAIDZ4ujDxVMgE="
 fernet = Fernet(ENCRYPTION_KEY)
+
+# Knowledge base folder
+KNOWLEDGE_DIR = "knowledge"
+os.makedirs(KNOWLEDGE_DIR, exist_ok=True)
+
+wiki = wikipediaapi.Wikipedia('en')
 
 @app.route("/")
 def home():
@@ -25,16 +32,15 @@ def command():
         encrypted_cmd = data.get("command")
 
         if not encrypted_cmd:
-            return jsonify({
-                "error": "No command received",
-                "received_data": data
-            }), 400
+            return jsonify({"error": "No command received"}), 400
 
         # 🔐 Decrypt incoming command
         decrypted_bytes = fernet.decrypt(encrypted_cmd.encode())
         cmd = decrypted_bytes.decode().lower()
 
         # 🧠 Process command
+        response = ""
+
         if cmd == "status":
             response = "Status: Online"
         elif cmd == "time":
@@ -43,8 +49,26 @@ def command():
             response = "Hello, Creator."
         elif cmd.startswith("echo "):
             response = f"You said: {cmd[5:]}"
+        elif cmd.startswith("learn "):
+            topic = cmd[6:]
+            page = wiki.page(topic)
+            if page.exists():
+                summary = page.summary[:1000]
+                with open(f"{KNOWLEDGE_DIR}/{topic}.txt", "w", encoding="utf-8") as f:
+                    f.write(summary)
+                response = f"📚 Learned and saved info about '{topic}'"
+            else:
+                response = f"No public info found for '{topic}'"
+        elif cmd.startswith("query "):
+            topic = cmd[6:]
+            try:
+                with open(f"{KNOWLEDGE_DIR}/{topic}.txt", "r", encoding="utf-8") as f:
+                    content = f.read()
+                response = f"🧠 From my knowledge: {content}"
+            except FileNotFoundError:
+                response = f"I haven't learned about '{topic}' yet."
         else:
-            response = f"Unknown command: '{cmd}'"
+            response = "Unknown command."
 
         # 🔒 Encrypt outgoing response
         encrypted_response = fernet.encrypt(response.encode()).decode()
@@ -52,12 +76,10 @@ def command():
 
     except Exception as e:
         return jsonify({
-            "error": "Decryption or processing failed",
+            "error": "Invalid or missing command",
             "details": str(e),
-            "raw_received_command": encrypted_cmd,
-            "key_used": ENCRYPTION_KEY.decode(),
-            "type_of_error": type(e).__name__
-        }), 400
+            "key_used": ENCRYPTION_KEY.decode()
+        }), 500
 
 @app.route("/aura_ui_simple.html")
 def simple_ui():

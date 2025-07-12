@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Aura Command Center</title>
 
-    <!-- Load local copy of CryptoJS -->
+    <!-- Load local CryptoJS -->
     <script src="crypto-js.min.js"></script>
 
     <style>
@@ -48,12 +48,14 @@
     <button onclick="sendCommand('time')">Time</button>
     <button onclick="sendCommand('greet')">Greet</button>
     <button onclick="sendCommand('echo hello world')">Echo</button>
+    <button onclick="sendCommand('learn artificial intelligence')">Learn AI</button>
+    <button onclick="sendCommand('query artificial intelligence')">Query AI</button>
 
     <h2>Response:</h2>
     <div id="response">Waiting for command...</div>
 
     <script>
-        // 🔑 Must match server-side key exactly
+        // 🔑 Must match server-side key
         const ENCRYPTION_KEY = "aBwnzjV2tf8UyRboLQODQHpuOl9PwvAIDZ4ujDxVMgE=";
 
         function encrypt(text) {
@@ -92,7 +94,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.error) {
-                    document.getElementById("response").textContent = "Error: " + data.error + "\nDetails: " + data.details;
+                    document.getElementById("response").textContent = "Error: " + data.error;
                 } else {
                     document.getElementById("response").textContent = decrypt(data.response);
                 }
