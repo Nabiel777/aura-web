@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Aura Command Center</title>
+
+    <!-- Load local CryptoJS -->
+    <script src="crypto-js.min.js"></script>
+
     <style>
         body {
             background-color: #111;
@@ -44,13 +48,10 @@
     <button onclick="sendCommand('time')">Time</button>
     <button onclick="sendCommand('greet')">Greet</button>
     <button onclick="sendCommand('echo hello world')">Echo</button>
-    <button onclick="sendCommand('learn artificial intelligence')">Learn AI</button>
-    <button onclick="sendCommand('query artificial intelligence')">Query AI</button>
 
     <h2>Response:</h2>
     <div id="response">Waiting for command...</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/crypto-js @4.1.1/crypto-js.min.js"></script>
     <script>
         // 🔑 Replace with your real key
         const ENCRYPTION_KEY = "aBwnzjV2tf8UyRboLQODQHpuOl9PwvAIDZ4ujDxVMgE=";
