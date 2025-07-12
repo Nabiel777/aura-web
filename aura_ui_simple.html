@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Aura Command Center</title>
 
-    <!-- Load local CryptoJS -->
+    <!-- Load local copy of CryptoJS -->
     <script src="crypto-js.min.js"></script>
 
     <style>
@@ -53,7 +53,7 @@
     <div id="response">Waiting for command...</div>
 
     <script>
-        // 🔑 Replace with your real key
+        // 🔑 Must match server-side key exactly
         const ENCRYPTION_KEY = "aBwnzjV2tf8UyRboLQODQHpuOl9PwvAIDZ4ujDxVMgE=";
 
         function encrypt(text) {
@@ -92,7 +92,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.error) {
-                    document.getElementById("response").textContent = "Error: " + data.error;
+                    document.getElementById("response").textContent = "Error: " + data.error + "\nDetails: " + data.details;
                 } else {
                     document.getElementById("response").textContent = decrypt(data.response);
                 }

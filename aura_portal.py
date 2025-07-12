@@ -1,6 +1,4 @@
 
-ENCRYPTION_KEY = b'aBwnzjV2tf8UyRboLQODQHpuOl9PwvAIDZ4ujDxVMgE='
-
 from flask import Flask, request, jsonify
 import json
 import datetime
@@ -12,8 +10,8 @@ app = Flask(__name__, static_folder='.')
 with open("aura_directive.json", "r") as f:
     directive = json.load(f)
 
-# 🔒 Replace with your real key later
-ENCRYPTION_KEY = b'aBwnzjV2tf8UyRboLQODQHpuOl9PwvAIDZ4ujDxVMgE='
+# 🔒 Replace this with your real key from generate_key.py
+ENCRYPTION_KEY = b"aBwnzjV2tf8UyRboLQODQHpuOl9PwvAIDZ4ujDxVMgE="  # ← Use your own generated key here
 fernet = Fernet(ENCRYPTION_KEY)
 
 @app.route("/")
@@ -27,7 +25,10 @@ def command():
         encrypted_cmd = data.get("command")
 
         if not encrypted_cmd:
-            return jsonify({"error": "No command received"}), 400
+            return jsonify({
+                "error": "No command received",
+                "received_data": data
+            }), 400
 
         # 🔐 Decrypt incoming command
         decrypted_bytes = fernet.decrypt(encrypted_cmd.encode())
@@ -43,19 +44,24 @@ def command():
         elif cmd.startswith("echo "):
             response = f"You said: {cmd[5:]}"
         else:
-            response = "Unknown command."
+            response = f"Unknown command: '{cmd}'"
 
         # 🔒 Encrypt outgoing response
         encrypted_response = fernet.encrypt(response.encode()).decode()
         return jsonify({"response": encrypted_response})
 
     except Exception as e:
-        return jsonify({"error": "Invalid or missing command", "details": str(e)}), 500
+        return jsonify({
+            "error": "Decryption or processing failed",
+            "details": str(e),
+            "raw_received_command": encrypted_cmd,
+            "key_used": ENCRYPTION_KEY.decode(),
+            "type_of_error": type(e).__name__
+        }), 400
 
 @app.route("/aura_ui_simple.html")
 def simple_ui():
     return app.send_static_file("aura_ui_simple.html")
-
 
 if __name__ == "__main__":
     import os
