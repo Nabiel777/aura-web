@@ -4,8 +4,6 @@ import datetime
 from cryptography.fernet import Fernet
 import wikipediaapi
 import os
-
-# 🔁 Import evolve module
 from evolve import log_action, get_trend, evolve_suggestion, save_knowledge
 
 app = Flask(__name__, static_folder='.')
@@ -14,14 +12,13 @@ app = Flask(__name__, static_folder='.')
 with open("aura_directive.json", "r") as f:
     directive = json.load(f)
 
-# 🔒 Use your fixed key (must match JavaScript)
+# 🔒 Use your fixed key
 ENCRYPTION_KEY = b"aBwnzjV2tf8UyRboLQODQHpuOl9PwvAIDZ4ujDxVMgE="
 fernet = Fernet(ENCRYPTION_KEY)
 
 # Knowledge base setup
 KNOWLEDGE_DIR = "knowledge"
 os.makedirs(KNOWLEDGE_DIR, exist_ok=True)
-
 wiki = wikipediaapi.Wikipedia('en')
 
 @app.route("/")
@@ -50,7 +47,7 @@ def command():
         if cmd == "status":
             response = "Status: Online"
         elif cmd == "time":
-            response = f"Time: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            response = f"Time: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')"
         elif cmd == "greet":
             response = "Hello, Creator."
         elif cmd.startswith("echo "):
@@ -105,4 +102,5 @@ def simple_ui():
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 5000))
+    print(f"🌍 Starting Aura portal on 0.0.0.0:{port}")
     app.run(host="0.0.0.0", port=port)
