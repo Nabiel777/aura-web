@@ -1,3 +1,5 @@
+from evolve import log_action, get_trend, evolve_suggestion, save_knowledge
+
 from flask import Flask, request, jsonify
 import json
 import datetime
@@ -40,7 +42,7 @@ def command():
         decrypted_bytes = fernet.decrypt(encrypted_cmd.encode())
         cmd = decrypted_bytes.decode().lower()
 
-        # 🧠 Process commands
+        # 🧠 Process command
         response = ""
 
         if cmd == "status":
@@ -56,8 +58,7 @@ def command():
             page = wiki.page(topic)
             if page.exists():
                 summary = page.summary[:1000]
-                with open(f"{KNOWLEDGE_DIR}/{topic}.txt", "w", encoding="utf-8") as f:
-                    f.write(summary)
+                save_knowledge(topic, summary)
                 response = f"📚 Learned and saved info about '{topic}'"
             else:
                 response = f"No public info found for '{topic}'"
@@ -69,11 +70,18 @@ def command():
                 response = f"🧠 From my knowledge: {content}"
             except FileNotFoundError:
                 response = f"I haven't learned about '{topic}' yet."
+        elif cmd == "trend":
+            response = f"📊 Most used command type: {get_trend()}"
+        elif cmd == "suggest":
+            response = f"🧩 Evolution suggestion: {evolve_suggestion()}"
         else:
-            response = "Unknown command."
+            response = f"Unknown command: '{cmd}'"
 
         # 🔒 Encrypt outgoing response
         encrypted_response = fernet.encrypt(response.encode()).decode()
+
+        # 📜 Log action for future learning
+        log_action(cmd, response)
 
         return jsonify({"response": encrypted_response})
 
@@ -81,11 +89,8 @@ def command():
         return jsonify({
             "error": "Invalid or missing command",
             "details": str(e),
-            "raw_command": encrypted_cmd,
-            "key_used": ENCRYPTION_KEY.decode(),
-            "type_of_error": type(e).__name__
+            "raw_command": encrypted_cmd
         }), 500
-
 
 @app.route("/aura_ui_simple.html")
 def simple_ui():

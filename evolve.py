@@ -1,12 +1,13 @@
 import os
 import json
 from datetime import datetime
+from collections import Counter
 
 # Directory where learned knowledge is stored
 KNOWLEDGE_DIR = "knowledge"
 os.makedirs(KNOWLEDGE_DIR, exist_ok=True)
 
-# Log file for tracking usage patterns
+# Log file for tracking usage
 ACTION_LOG_FILE = "aura_actions.json"
 
 def log_action(command, response):
@@ -38,25 +39,30 @@ def get_trend():
     with open(ACTION_LOG_FILE, "r") as f:
         logs = json.load(f)
 
-    from collections import Counter
-    commands = [log["command"].split()[0] for log in logs]
-    most_common = Counter(commands).most_common(1)
+    commands = [log["command"].split()[0] for log in logs if log["command"]]
+    counter = Counter(commands)
+    most_common = counter.most_common(1)
+
     return most_common[0][0] if most_common else "No trend"
 
 
 def evolve_suggestion():
     """Suggest next area to improve"""
     trend = get_trend()
+
     suggestions = {
         "learn": "Consider adding real-time web search support.",
-        "query": "You should expand your local knowledge storage.",
-        "echo": "You may benefit from a chat memory module.",
-        "greet": "Try personalizing greetings based on user ID."
+        "query": "You should expand local knowledge storage and indexing.",
+        "echo": "Try implementing a chat memory module.",
+        "greet": "Personalize greetings based on user ID or history",
+        "time": "Add timezone-aware time handling",
+        "status": "Implement health checks and auto-recovery"
     }
+
     return suggestions.get(trend, "Unknown trend. Consider improving general knowledge access.")
 
 
 def save_knowledge(topic, content):
-    """Save what was learned from external sources"""
+    """Save learned knowledge locally"""
     with open(f"{KNOWLEDGE_DIR}/{topic}.txt", "w", encoding="utf-8") as f:
         f.write(content)
