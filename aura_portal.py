@@ -1,5 +1,3 @@
-from evolve import log_action, get_trend, evolve_suggestion, save_knowledge
-
 from flask import Flask, request, jsonify
 import json
 import datetime
@@ -7,19 +5,23 @@ from cryptography.fernet import Fernet
 import wikipediaapi
 import os
 
+# 🔁 Import evolve module
+from evolve import log_action, get_trend, evolve_suggestion, save_knowledge
+
 app = Flask(__name__, static_folder='.')
 
 # Load directive
 with open("aura_directive.json", "r") as f:
     directive = json.load(f)
 
-# 🔒 Use your fixed key
+# 🔒 Use your fixed key (must match JavaScript)
 ENCRYPTION_KEY = b"aBwnzjV2tf8UyRboLQODQHpuOl9PwvAIDZ4ujDxVMgE="
 fernet = Fernet(ENCRYPTION_KEY)
 
 # Knowledge base setup
 KNOWLEDGE_DIR = "knowledge"
 os.makedirs(KNOWLEDGE_DIR, exist_ok=True)
+
 wiki = wikipediaapi.Wikipedia('en')
 
 @app.route("/")
@@ -89,8 +91,11 @@ def command():
         return jsonify({
             "error": "Invalid or missing command",
             "details": str(e),
-            "raw_command": encrypted_cmd
+            "raw_command": encrypted_cmd,
+            "key_used": ENCRYPTION_KEY.decode(),
+            "type_of_error": type(e).__name__
         }), 500
+
 
 @app.route("/aura_ui_simple.html")
 def simple_ui():

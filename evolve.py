@@ -1,17 +1,17 @@
 import os
 import json
 from datetime import datetime
-from collections import Counter
 
-# Directory where learned knowledge is stored
+# Knowledge storage directory
 KNOWLEDGE_DIR = "knowledge"
-os.makedirs(KNOWLEDGE_DIR, exist_ok=True)
+if not os.path.exists(KNOWLEDGE_DIR):
+    os.makedirs(KNOWLEDGE_DIR, exist_ok=True)
 
-# Log file for tracking usage
+# Action log file
 ACTION_LOG_FILE = "aura_actions.json"
 
 def log_action(command, response):
-    """Log every interaction for future improvement"""
+    """Log every interaction for trend tracking"""
     entry = {
         "timestamp": datetime.now().isoformat(),
         "command": command,
@@ -32,31 +32,31 @@ def log_action(command, response):
 
 
 def get_trend():
-    """Get most used command types"""
+    """Identify most used command types"""
     if not os.path.exists(ACTION_LOG_FILE):
         return "No trend yet."
 
     with open(ACTION_LOG_FILE, "r") as f:
         logs = json.load(f)
 
-    commands = [log["command"].split()[0] for log in logs if log["command"]]
-    counter = Counter(commands)
-    most_common = counter.most_common(1)
+    from collections import Counter
+    trends = [log["command"].split()[0] for log in logs]
+    most_common = Counter(trends).most_common(1)
 
     return most_common[0][0] if most_common else "No trend"
 
 
 def evolve_suggestion():
-    """Suggest next area to improve"""
+    """Return a suggested improvement based on usage"""
     trend = get_trend()
 
     suggestions = {
-        "learn": "Consider adding real-time web search support.",
-        "query": "You should expand local knowledge storage and indexing.",
-        "echo": "Try implementing a chat memory module.",
-        "greet": "Personalize greetings based on user ID or history",
-        "time": "Add timezone-aware time handling",
-        "status": "Implement health checks and auto-recovery"
+        "learn": "Add real-time web search support.",
+        "query": "Expand local knowledge indexing system.",
+        "echo": "Build memory-based chat enhancements.",
+        "greet": "Personalize greetings using user ID.",
+        "time": "Add timezone-aware time handling.",
+        "status": "Implement health checks and auto-recovery."
     }
 
     return suggestions.get(trend, "Unknown trend. Consider improving general knowledge access.")
